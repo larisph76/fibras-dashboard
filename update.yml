@@ -1,0 +1,40 @@
+name: Actualización Trimestral de FIBRAs
+
+on:
+  # Corre automáticamente el día 20 de enero, abril, julio y octubre a las 9am hora CDMX
+  schedule:
+    - cron: '0 15 20 1,4,7,10 *'
+
+  # También puedes correrlo manualmente desde GitHub
+  workflow_dispatch:
+
+jobs:
+  actualizar-fibras:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Actualizar datos fundamentales con Claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/update_fundamentals.py
+
+      - name: Publicar cambios
+        run: |
+          git config --global user.name  "fibras-bot"
+          git config --global user.email "bot@fibras-dashboard"
+          git add index.html
+          git diff --staged --quiet || git commit -m "🔄 Datos trimestrales actualizados $(date +'%Y-%m-%d')"
+          git push
