@@ -6,479 +6,395 @@
   <title>FIBRAs Dashboard — larisph76</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <style>
-    :root {
-      --navy:      #0D1B2A;
-      --teal:      #0F9B76;
-      --teal-light:#E1F5EE;
-      --gold:      #D4820A;
-      --gold-light:#FAEEDA;
-      --red-bg:    #FCEBEB;
-      --green-bg:  #EAF3DE;
-      --gray-bg:   #F5F5F3;
-      --border:    #E0DDD6;
-      --text:      #1A1A1A;
-      --text2:     #666560;
-      --bg:        #FFFFFF;
-      --bg2:       #F5F5F3;
-      --radius:    8px;
-      --font: 'Segoe UI', Arial, sans-serif;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--font); background: var(--bg2); color: var(--text); min-height: 100vh; }
-
-    /* ── Header ── */
-    .topbar { background: var(--navy); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; }
-    .topbar-title { color: #fff; font-size: 17px; font-weight: 600; letter-spacing: 0.01em; }
-    .topbar-sub { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 1px; }
-    .refresh-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: #fff; cursor: pointer; transition: background 0.15s; }
-    .refresh-btn:hover { background: rgba(255,255,255,0.1); }
-    .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .spin { display: inline-block; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Layout ── */
-    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem; }
-
-    /* ── Status bar ── */
-    .status-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px; }
-    .status-text { font-size: 12px; color: var(--text2); }
-    .last-update { font-size: 12px; color: var(--text2); }
-
-    /* ── Progress ── */
-    .progress { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 1.25rem; display: none; }
-    .progress-bar { height: 100%; width: 0%; background: var(--teal); border-radius: 2px; transition: width 0.3s; }
-
-    /* ── Error banner ── */
-    .error-banner { background: var(--red-bg); border: 1px solid #F09595; border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: #A32D2D; margin-bottom: 1rem; display: none; }
-
-    /* ── Metrics ── */
-    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
-    .metric { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
-    .metric-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
-    .metric-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
-    .metric-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
-
-    /* ── Tabs ── */
-    .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
-    .tab { font-size: 13px; font-weight: 500; padding: 8px 18px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text2); margin-bottom: -1px; transition: all 0.15s; border-radius: var(--radius) var(--radius) 0 0; }
-    .tab.active { color: var(--teal); border-bottom-color: var(--teal); background: var(--teal-light); }
-    .tab:hover:not(.active) { color: var(--text); background: var(--bg2); }
-    .panel { display: none; }
-    .panel.active { display: block; }
-
-    /* ── Filters ── */
-    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
-    .filter-bar label { font-size: 12px; color: var(--text2); }
-    .filter-bar select { font-size: 12px; padding: 5px 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg); color: var(--text); }
-
-    /* ── Table ── */
-    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg); }
-    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-    thead th { background: var(--bg2); padding: 10px 12px; text-align: center; font-weight: 600; font-size: 11px; color: var(--text2); border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; text-transform: uppercase; letter-spacing: 0.04em; }
-    thead th:hover { color: var(--text); }
-    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: var(--bg2); }
-    td { padding: 9px 12px; text-align: center; color: var(--text); }
-    td.ticker { font-weight: 600; text-align: left; font-size: 13px; color: var(--navy); }
-    td.sector { font-size: 11px; color: var(--text2); text-align: left; }
-
-    /* ── Badges ── */
-    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
-    .badge-buy    { background: #EAF3DE; color: #3B6D11; }
-    .badge-atract { background: #FAEEDA; color: #854F0B; }
-    .badge-cara   { background: #FCEBEB; color: #A32D2D; }
-    .badge-neut   { background: var(--bg2); color: var(--text2); }
-
-    /* ── Diff colors ── */
-    .diff-neg { color: #3B6D11; font-weight: 600; }
-    .diff-pos { color: #A32D2D; font-weight: 600; }
-    .diff-neu { color: var(--text2); }
-
-    /* ── Loading row ── */
-    .loading-row td { text-align: center; color: var(--text2); font-size: 12px; padding: 2.5rem; }
-
-    /* ── Charts ── */
-    .chart-full { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
-    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 600px) { .chart-grid { grid-template-columns: 1fr; } }
-    .chart-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
-    .chart-title { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-    .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
-    .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-
-    /* ── Footer ── */
-    .footer { text-align: center; font-size: 11px; color: var(--text2); margin-top: 2rem; padding-bottom: 1rem; }
-    .footer a { color: var(--teal); text-decoration: none; }
-
-    /* ── Data update notice ── */
-    .data-notice { background: var(--gold-light); border: 1px solid #E8C27A; border-radius: var(--radius); padding: 8px 14px; font-size: 11px; color: #7A4F0A; margin-bottom: 1rem; }
+    :root{--navy:#0D1B2A;--teal:#0F9B76;--teal-light:#E1F5EE;--gold:#D4820A;--gold-light:#FAEEDA;--red-bg:#FCEBEB;--border:#E0DDD6;--text:#1A1A1A;--text2:#666560;--bg:#FFFFFF;--bg2:#F5F5F3;--radius:8px;--font:'Segoe UI',Arial,sans-serif;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font);background:var(--bg2);color:var(--text);min-height:100vh;}
+    .topbar{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:56px;}
+    .topbar-title{color:#fff;font-size:17px;font-weight:600;}
+    .topbar-sub{color:rgba(255,255,255,0.5);font-size:12px;margin-top:1px;}
+    .refresh-btn{display:flex;align-items:center;gap:6px;font-size:13px;padding:6px 16px;border-radius:20px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:#fff;cursor:pointer;transition:background .15s;}
+    .refresh-btn:hover{background:rgba(255,255,255,0.1);}
+    .refresh-btn:disabled{opacity:.4;cursor:not-allowed;}
+    .spin{display:inline-block;animation:spin .8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .container{max-width:1300px;margin:0 auto;padding:1.5rem 1rem;}
+    .status-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;}
+    .status-text,.last-update{font-size:12px;color:var(--text2);}
+    .progress{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:1.25rem;display:none;}
+    .progress-bar{height:100%;width:0%;background:var(--teal);border-radius:2px;transition:width .3s;}
+    .error-banner{background:var(--red-bg);border:1px solid #F09595;border-radius:var(--radius);padding:10px 14px;font-size:12px;color:#A32D2D;margin-bottom:1rem;display:none;}
+    .data-notice{background:var(--gold-light);border:1px solid #E8C27A;border-radius:var(--radius);padding:8px 14px;font-size:11px;color:#7A4F0A;margin-bottom:1rem;}
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:1.5rem;}
+    .metric{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;}
+    .metric-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+    .metric-value{font-size:24px;font-weight:600;color:var(--text);line-height:1;}
+    .metric-sub{font-size:11px;color:var(--text2);margin-top:4px;}
+    .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1.25rem;}
+    .tab{font-size:13px;font-weight:500;padding:8px 18px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);margin-bottom:-1px;transition:all .15s;border-radius:var(--radius) var(--radius) 0 0;}
+    .tab.active{color:var(--teal);border-bottom-color:var(--teal);background:var(--teal-light);}
+    .tab:hover:not(.active){color:var(--text);background:var(--bg2);}
+    .panel{display:none;}.panel.active{display:block;}
+    .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem;align-items:center;}
+    .filter-bar label{font-size:12px;color:var(--text2);}
+    .filter-bar select{font-size:12px;padding:5px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--text);}
+    .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead th{background:var(--bg2);padding:9px 10px;text-align:center;font-weight:600;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;text-transform:uppercase;letter-spacing:.04em;}
+    thead th:hover{color:var(--text);}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+    tbody tr:last-child{border-bottom:none;}
+    tbody tr:hover{background:#F0FAF6;}
+    td{padding:8px 10px;text-align:center;color:var(--text);}
+    td.ticker-cell{text-align:left;}
+    .ticker-link{font-weight:600;font-size:13px;color:var(--navy);text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
+    .ticker-link:hover{color:var(--teal);text-decoration:underline;}
+    .ticker-link .ext{font-size:9px;color:var(--text2);}
+    .detail-btn{font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;margin-left:4px;}
+    .detail-btn:hover{background:var(--teal-light);border-color:var(--teal);color:var(--teal);}
+    td.sector{font-size:11px;color:var(--text2);text-align:left;}
+    .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+    .badge-buy{background:#EAF3DE;color:#3B6D11;}.badge-atract{background:#FAEEDA;color:#854F0B;}
+    .badge-cara{background:#FCEBEB;color:#A32D2D;}.badge-neut{background:var(--bg2);color:var(--text2);}
+    .diff-neg{color:#3B6D11;font-weight:600;}.diff-pos{color:#A32D2D;font-weight:600;}.diff-neu{color:var(--text2);}
+    .loading-row td{text-align:center;color:var(--text2);font-size:12px;padding:2.5rem;}
+    .chart-full{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;}
+    .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media(max-width:600px){.chart-grid{grid-template-columns:1fr;}}
+    .chart-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;}
+    .chart-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem;}
+    .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;}
+    .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+    .legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem;}
+    .modal-bg.open{display:flex;}
+    .modal{background:var(--bg);border-radius:12px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+    .modal-header{background:var(--navy);padding:1.25rem 1.5rem;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;}
+    .modal-title{color:#fff;font-size:18px;font-weight:600;}
+    .modal-sub{color:rgba(255,255,255,.5);font-size:12px;margin-top:2px;}
+    .modal-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;line-height:1;padding:4px;}
+    .modal-close:hover{color:#fff;}
+    .modal-body{padding:1.5rem;}
+    .modal-price{font-size:32px;font-weight:700;color:var(--text);margin-bottom:.25rem;}
+    .modal-price-sub{font-size:13px;color:var(--text2);margin-bottom:1.25rem;}
+    .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem;}
+    .modal-card{background:var(--bg2);border-radius:var(--radius);padding:.875rem 1rem;}
+    .modal-card-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+    .modal-card-value{font-size:17px;font-weight:600;color:var(--text);}
+    .modal-card-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+    .modal-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:1rem;}
+    .modal-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text2);text-decoration:none;transition:all .15s;}
+    .modal-link:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-light);}
+    .modal-section-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:1.25rem 0 .75rem;}
+    .modal-badge-row{display:flex;align-items:center;gap:10px;margin-bottom:1rem;}
+    .footer{text-align:center;font-size:11px;color:var(--text2);margin-top:2rem;padding-bottom:1rem;}
+    .footer a{color:var(--teal);text-decoration:none;}
   </style>
 </head>
 <body>
-
 <div class="topbar">
-  <div>
-    <div class="topbar-title">📊 FIBRAs Dashboard</div>
-    <div class="topbar-sub">BMV &amp; BIVA · larisph76</div>
-  </div>
-  <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">
-    <span id="refresh-icon">↻</span> Actualizar precios
-  </button>
+  <div><div class="topbar-title">📊 FIBRAs Dashboard</div><div class="topbar-sub">BMV &amp; BIVA · larisph76</div></div>
+  <button class="refresh-btn" id="refresh-btn" onclick="loadAll()"><span id="refresh-icon">↻</span> Actualizar precios</button>
 </div>
-
 <div class="container">
-
   <div class="status-bar">
     <div class="status-text" id="status-line">Cargando precios...</div>
     <div class="last-update" id="last-update"></div>
   </div>
-
-  <div class="progress" id="progress-wrap">
-    <div class="progress-bar" id="progress-bar"></div>
-  </div>
-
+  <div class="progress" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
   <div class="error-banner" id="error-banner"></div>
-
-  <div class="data-notice">
-    ⚡ <strong>Precios:</strong> en tiempo real vía Yahoo Finance · <strong>Datos fundamentales</strong> (NAV, FFO, AFFO, LTV): actualizados automáticamente cada trimestre vía GitHub Actions
-  </div>
-
-  <!-- Metrics -->
+  <div class="data-notice">⚡ <strong>Precios:</strong> tiempo real vía Yahoo Finance · clic en ticker para ver historial · botón <strong>"+"</strong> para detalle completo &nbsp;|&nbsp; <strong>Fundamentales:</strong> actualización automática trimestral vía GitHub Actions</div>
   <div class="metrics">
-    <div class="metric">
-      <div class="metric-label">FIBRAs</div>
-      <div class="metric-value" id="m-count">—</div>
-      <div class="metric-sub">monitoreadas</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Yield promedio</div>
-      <div class="metric-value" id="m-yield">—</div>
-      <div class="metric-sub">distribución / precio</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Con descuento</div>
-      <div class="metric-value" id="m-discount">—</div>
-      <div class="metric-sub">precio &lt; NAV</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Señales compra</div>
-      <div class="metric-value" id="m-buy">—</div>
-      <div class="metric-sub">yield &gt;7% + descuento</div>
-    </div>
+    <div class="metric"><div class="metric-label">FIBRAs</div><div class="metric-value" id="m-count">—</div><div class="metric-sub">monitoreadas</div></div>
+    <div class="metric"><div class="metric-label">Yield promedio</div><div class="metric-value" id="m-yield">—</div><div class="metric-sub">dist. / precio</div></div>
+    <div class="metric"><div class="metric-label">Con descuento</div><div class="metric-value" id="m-discount">—</div><div class="metric-sub">precio &lt; NAV</div></div>
+    <div class="metric"><div class="metric-label">Señales compra</div><div class="metric-value" id="m-buy">—</div><div class="metric-sub">yield &gt;7% + desc.</div></div>
+    <div class="metric"><div class="metric-label">LTV promedio</div><div class="metric-value" id="m-ltv">—</div><div class="metric-sub">nivel de deuda</div></div>
   </div>
-
-  <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('tabla')">📋 Tabla</div>
     <div class="tab" onclick="switchTab('graficas')">📊 Gráficas</div>
   </div>
-
-  <!-- Panel: Tabla -->
   <div class="panel active" id="panel-tabla">
     <div class="filter-bar">
       <label>Sector:</label>
       <select id="filter-sector" onchange="render()">
         <option value="">Todos</option>
-        <option>Diversificado</option>
-        <option>Industrial / Logística</option>
-        <option>Industrial</option>
-        <option>Comercial / Oficinas</option>
-        <option>Centros Comerciales</option>
-        <option>Industrial / Oficinas</option>
-        <option>Hotel / Hospitalidad</option>
-        <option>Autoalmacenaje</option>
-        <option>Hipotecario</option>
-        <option>Comercial</option>
+        <option>Diversificado</option><option>Industrial / Logística</option><option>Industrial</option>
+        <option>Comercial / Oficinas</option><option>Centros Comerciales</option><option>Industrial / Oficinas</option>
+        <option>Hotel / Hospitalidad</option><option>Autoalmacenaje</option><option>Hipotecario</option>
+        <option>Comercial</option><option>Fibra de Capital / Equity</option>
       </select>
       <label style="margin-left:8px;">Señal:</label>
       <select id="filter-signal" onchange="render()">
-        <option value="">Todas</option>
-        <option value="COMPRA">🟢 Compra</option>
-        <option value="ATRACTIVA">🟡 Atractiva</option>
-        <option value="CARA">🔴 Cara</option>
-        <option value="NEUTRAL">⚪ Neutral</option>
+        <option value="">Todas</option><option value="COMPRA">🟢 Compra</option>
+        <option value="ATRACTIVA">🟡 Atractiva</option><option value="CARA">🔴 Cara</option><option value="NEUTRAL">⚪ Neutral</option>
       </select>
-      <span style="margin-left:auto;font-size:11px;color:var(--text2);">Clic en columna para ordenar</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text2);">Ticker ↗ = Yahoo Finance &nbsp;·&nbsp; "+" = detalle completo</span>
     </div>
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th style="text-align:left;min-width:95px;" onclick="toggleSort('ticker')">FIBRA ↕</th>
-            <th style="min-width:80px;" onclick="toggleSort('precio')">Precio ↕</th>
-            <th style="min-width:70px;" onclick="toggleSort('nav')">NAV ↕</th>
-            <th style="min-width:75px;" onclick="toggleSort('diffPct')">vs NAV ↕</th>
-            <th style="min-width:85px;" onclick="toggleSort('dist')">Dist. Anual ↕</th>
-            <th style="min-width:65px;" onclick="toggleSort('yieldV')">Yield ↕</th>
-            <th style="min-width:65px;" onclick="toggleSort('ffo')">FFO ↕</th>
-            <th style="min-width:65px;" onclick="toggleSort('affo')">AFFO ↕</th>
-            <th style="min-width:55px;" onclick="toggleSort('ltv')">LTV ↕</th>
-            <th style="text-align:left;min-width:110px;" onclick="toggleSort('sector')">Sector ↕</th>
-            <th style="min-width:90px;" onclick="toggleSort('signal')">Señal ↕</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th style="text-align:left;min-width:130px;" onclick="toggleSort('ticker')">FIBRA ↕</th>
+          <th style="min-width:78px;" onclick="toggleSort('precio')">Precio ↕</th>
+          <th style="min-width:68px;" onclick="toggleSort('nav')">NAV ↕</th>
+          <th style="min-width:72px;" onclick="toggleSort('diffPct')">vs NAV ↕</th>
+          <th style="min-width:82px;" onclick="toggleSort('dist')">Dist. Anual ↕</th>
+          <th style="min-width:62px;" onclick="toggleSort('yieldV')">Yield ↕</th>
+          <th style="min-width:62px;" onclick="toggleSort('ffo')">FFO ↕</th>
+          <th style="min-width:62px;" onclick="toggleSort('affo')">AFFO ↕</th>
+          <th style="min-width:52px;" onclick="toggleSort('ltv')">LTV ↕</th>
+          <th style="min-width:90px;" onclick="toggleSort('activos')">Activos MDP ↕</th>
+          <th style="min-width:85px;" onclick="toggleSort('cbfis')">CBFIs (M) ↕</th>
+          <th style="text-align:left;min-width:105px;" onclick="toggleSort('sector')">Sector ↕</th>
+          <th style="min-width:88px;" onclick="toggleSort('signal')">Señal ↕</th>
+        </tr></thead>
         <tbody id="tbody">
-          <tr class="loading-row"><td colspan="11"><span class="spin">↻</span> Obteniendo precios de Yahoo Finance...</td></tr>
+          <tr class="loading-row"><td colspan="13"><span class="spin">↻</span> Obteniendo precios de Yahoo Finance...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
-
-  <!-- Panel: Gráficas -->
   <div class="panel" id="panel-graficas">
     <div class="chart-full">
       <div class="chart-title">Yield por distribución (%)</div>
-      <div style="position:relative;width:100%;height:240px;">
-        <canvas id="chartYield"></canvas>
-      </div>
+      <div style="position:relative;width:100%;height:240px;"><canvas id="chartYield"></canvas></div>
       <div class="legend" id="legend-yield"></div>
     </div>
     <div class="chart-grid">
-      <div class="chart-card">
-        <div class="chart-title">Precio vs NAV (%)</div>
-        <div style="position:relative;width:100%;height:210px;">
-          <canvas id="chartNav"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Nivel de deuda — LTV (%)</div>
-        <div style="position:relative;width:100%;height:210px;">
-          <canvas id="chartLtv"></canvas>
-        </div>
-      </div>
+      <div class="chart-card"><div class="chart-title">Precio vs NAV (%)</div><div style="position:relative;width:100%;height:210px;"><canvas id="chartNav"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Nivel de deuda — LTV (%)</div><div style="position:relative;width:100%;height:210px;"><canvas id="chartLtv"></canvas></div></div>
     </div>
   </div>
+  <div class="footer">FIBRAs Dashboard · <a href="https://larisph76.github.io/fibras-dashboard" target="_blank">larisph76.github.io/fibras-dashboard</a> · Datos: Yahoo Finance &amp; reportes BMV/BIVA</div>
+</div>
 
-  <div class="footer">
-    Dashboard de FIBRAs · <a href="https://larisph76.github.io/fibras-dashboard" target="_blank">larisph76.github.io/fibras-dashboard</a> ·
-    Datos: Yahoo Finance &amp; reportes trimestrales BMV/BIVA ·
-    <span id="fundamental-date"></span>
+<!-- Modal detalle -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title" id="modal-title">—</div><div class="modal-sub" id="modal-sub">—</div></div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-badge-row"><span id="modal-badge"></span></div>
+      <div class="modal-price" id="modal-price">—</div>
+      <div class="modal-price-sub">Precio de mercado actual (Yahoo Finance)</div>
+      <div class="modal-section-title">Indicadores fundamentales</div>
+      <div class="modal-grid">
+        <div class="modal-card"><div class="modal-card-label">NAV por CBFI</div><div class="modal-card-value" id="md-nav">—</div><div class="modal-card-sub">Valor patrimonial neto</div></div>
+        <div class="modal-card"><div class="modal-card-label">Precio vs NAV</div><div class="modal-card-value" id="md-diff">—</div><div class="modal-card-sub">Descuento / prima</div></div>
+        <div class="modal-card"><div class="modal-card-label">Dist. anual x CBFI</div><div class="modal-card-value" id="md-dist">—</div><div class="modal-card-sub">Últimos 4 trimestres</div></div>
+        <div class="modal-card"><div class="modal-card-label">Yield neto</div><div class="modal-card-value" id="md-yield">—</div><div class="modal-card-sub">Distribución / precio</div></div>
+        <div class="modal-card"><div class="modal-card-label">FFO por CBFI</div><div class="modal-card-value" id="md-ffo">—</div><div class="modal-card-sub">Funds from Operations</div></div>
+        <div class="modal-card"><div class="modal-card-label">AFFO por CBFI</div><div class="modal-card-value" id="md-affo">—</div><div class="modal-card-sub">Adjusted FFO</div></div>
+        <div class="modal-card"><div class="modal-card-label">LTV</div><div class="modal-card-value" id="md-ltv">—</div><div class="modal-card-sub">Nivel de deuda</div></div>
+        <div class="modal-card"><div class="modal-card-label">Total de activos</div><div class="modal-card-value" id="md-activos">—</div><div class="modal-card-sub">Millones de pesos MXN</div></div>
+        <div class="modal-card"><div class="modal-card-label">CBFIs en circulación</div><div class="modal-card-value" id="md-cbfis">—</div><div class="modal-card-sub">Millones de certificados</div></div>
+        <div class="modal-card"><div class="modal-card-label">Cap. de mercado</div><div class="modal-card-value" id="md-mktcap">—</div><div class="modal-card-sub">Precio × CBFIs (MDP)</div></div>
+      </div>
+      <div class="modal-section-title">Ver información completa</div>
+      <div class="modal-links">
+        <a class="modal-link" id="ml-yahoo" href="#" target="_blank">📈 Yahoo Finance — Precio e historial</a>
+        <a class="modal-link" id="ml-yahoo-fin" href="#" target="_blank">📊 Yahoo Finance — Financieros</a>
+        <a class="modal-link" href="https://www.bmv.com.mx/es/mercados/fibras" target="_blank">🏛 BMV — Reportes trimestrales</a>
+        <a class="modal-link" href="https://www.biva.mx/es/fibras" target="_blank">🏛 BIVA — Información emisora</a>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-// ── Datos fundamentales (actualizados automáticamente cada trimestre) ──────
-const FIBRAS = [
-  { ticker:"FUNO11",    nav:18.50, dist:1.25, ffo:1.80, affo:1.60, ltv:0.42, sector:"Diversificado" },
-  { ticker:"DANHOS13",  nav:28.00, dist:1.80, ffo:2.20, affo:2.00, ltv:0.35, sector:"Comercial / Oficinas" },
-  { ticker:"FSHOP13",   nav:14.00, dist:0.90, ffo:1.10, affo:1.00, ltv:0.38, sector:"Centros Comerciales" },
-  { ticker:"FMTY14",    nav:16.00, dist:1.20, ffo:1.40, affo:1.30, ltv:0.30, sector:"Industrial / Oficinas" },
-  { ticker:"FIBRAPL14", nav:52.00, dist:3.50, ffo:4.20, affo:4.00, ltv:0.28, sector:"Industrial / Logística" },
-  { ticker:"FIBRAMQ12", nav:24.00, dist:1.60, ffo:2.00, affo:1.80, ltv:0.45, sector:"Industrial / Logística" },
-  { ticker:"TERRA13",   nav:30.00, dist:2.00, ffo:2.40, affo:2.20, ltv:0.33, sector:"Industrial" },
-  { ticker:"FINN13",    nav:11.50, dist:0.80, ffo:0.95, affo:0.85, ltv:0.50, sector:"Diversificado" },
-  { ticker:"STORAGE",   nav:20.00, dist:1.30, ffo:1.60, affo:1.45, ltv:0.40, sector:"Autoalmacenaje" },
-  { ticker:"FIBRAHD",   nav:22.00, dist:1.50, ffo:1.75, affo:1.60, ltv:0.37, sector:"Hotel / Hospitalidad" },
-  { ticker:"PLUSFIB",   nav:18.00, dist:1.10, ffo:1.40, affo:1.25, ltv:0.44, sector:"Diversificado" },
-  { ticker:"HITES",     nav:19.00, dist:1.20, ffo:1.50, affo:1.35, ltv:0.41, sector:"Comercial" },
-  { ticker:"VESTA",     nav:38.00, dist:2.80, ffo:3.20, affo:3.00, ltv:0.25, sector:"Industrial" },
-  { ticker:"CREAL",     nav:16.00, dist:1.00, ffo:1.20, affo:1.10, ltv:0.55, sector:"Hipotecario" },
+// ── Datos fundamentales (actualización automática trimestral) ──────────────
+const FIBRAS=[
+  {ticker:"FUNO11",   nav:18.50,dist:1.25,ffo:1.80,affo:1.60,ltv:0.42,activos:120000,cbfis:5800, sector:"Diversificado"},
+  {ticker:"DANHOS13", nav:28.00,dist:1.80,ffo:2.20,affo:2.00,ltv:0.35,activos:55000, cbfis:1800, sector:"Comercial / Oficinas"},
+  {ticker:"FSHOP13",  nav:14.00,dist:0.90,ffo:1.10,affo:1.00,ltv:0.38,activos:28000, cbfis:1600, sector:"Centros Comerciales"},
+  {ticker:"FMTY14",   nav:16.00,dist:1.20,ffo:1.40,affo:1.30,ltv:0.30,activos:32000, cbfis:1900, sector:"Industrial / Oficinas"},
+  {ticker:"FIBRAPL14",nav:52.00,dist:3.50,ffo:4.20,affo:4.00,ltv:0.28,activos:85000, cbfis:1400, sector:"Industrial / Logística"},
+  {ticker:"FIBRAMQ12",nav:24.00,dist:1.60,ffo:2.00,affo:1.80,ltv:0.45,activos:45000, cbfis:1650, sector:"Industrial / Logística"},
+  {ticker:"TERRA13",  nav:30.00,dist:2.00,ffo:2.40,affo:2.20,ltv:0.33,activos:38000, cbfis:1100, sector:"Industrial"},
+  {ticker:"FINN13",   nav:11.50,dist:0.80,ffo:0.95,affo:0.85,ltv:0.50,activos:18000, cbfis:1400, sector:"Diversificado"},
+  {ticker:"STORAGE",  nav:20.00,dist:1.30,ffo:1.60,affo:1.45,ltv:0.40,activos:12000, cbfis:550,  sector:"Autoalmacenaje"},
+  {ticker:"FIBRAHD",  nav:22.00,dist:1.50,ffo:1.75,affo:1.60,ltv:0.37,activos:22000, cbfis:900,  sector:"Hotel / Hospitalidad"},
+  {ticker:"PLUSFIB",  nav:18.00,dist:1.10,ffo:1.40,affo:1.25,ltv:0.44,activos:15000, cbfis:750,  sector:"Diversificado"},
+  {ticker:"HITES",    nav:19.00,dist:1.20,ffo:1.50,affo:1.35,ltv:0.41,activos:20000, cbfis:950,  sector:"Comercial"},
+  {ticker:"VESTA",    nav:38.00,dist:2.80,ffo:3.20,affo:3.00,ltv:0.25,activos:48000, cbfis:1100, sector:"Industrial"},
+  {ticker:"CREAL",    nav:16.00,dist:1.00,ffo:1.20,affo:1.10,ltv:0.55,activos:25000, cbfis:1300, sector:"Hipotecario"},
+  {ticker:"FCFE",     nav:12.00,dist:0.85,ffo:1.00,affo:0.90,ltv:0.38,activos:14000, cbfis:1050, sector:"Fibra de Capital / Equity"},
 ];
 
-let data = FIBRAS.map(f => ({ ...f, precio: null, loading: true }));
-let sortKey = null, sortDir = 1, activeTab = 'tabla';
-let charts = {};
+let data=FIBRAS.map(f=>({...f,precio:null,loading:true}));
+let sortKey=null,sortDir=1,activeTab='tabla',charts={};
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-function sig(d) {
-  if (!d.precio) return 'CARGANDO';
-  const dp = (d.precio - d.nav) / d.nav;
-  const y  = d.dist / d.precio;
-  if (dp < -0.05 && y > 0.07) return 'COMPRA';
-  if (dp > 0.05)               return 'CARA';
-  if (y  > 0.06)               return 'ATRACTIVA';
+function sig(d){
+  if(!d.precio) return 'CARGANDO';
+  const dp=(d.precio-d.nav)/d.nav,y=d.dist/d.precio;
+  if(dp<-0.05&&y>0.07) return 'COMPRA';
+  if(dp>0.05) return 'CARA';
+  if(y>0.06) return 'ATRACTIVA';
   return 'NEUTRAL';
 }
-const fmt    = (n, d=2, p='$') => n == null ? '—' : p + n.toFixed(d);
-const fmtPct = n => n == null ? '—' : (n*100).toFixed(1)+'%';
-
-function badgeHtml(s) {
-  const cls = { COMPRA:'badge-buy', ATRACTIVA:'badge-atract', CARA:'badge-cara', NEUTRAL:'badge-neut', CARGANDO:'badge-neut' };
-  const lbl = { COMPRA:'🟢 Compra', ATRACTIVA:'🟡 Atractiva', CARA:'🔴 Cara', NEUTRAL:'⚪ Neutral', CARGANDO:'...' };
+const fmt=(n,d=2,p='$')=>n==null?'—':p+n.toFixed(d);
+const fmtPct=n=>n==null?'—':(n*100).toFixed(1)+'%';
+function badgeHtml(s){
+  const cls={COMPRA:'badge-buy',ATRACTIVA:'badge-atract',CARA:'badge-cara',NEUTRAL:'badge-neut',CARGANDO:'badge-neut'};
+  const lbl={COMPRA:'🟢 Compra',ATRACTIVA:'🟡 Atractiva',CARA:'🔴 Cara',NEUTRAL:'⚪ Neutral',CARGANDO:'...'};
   return `<span class="badge ${cls[s]}">${lbl[s]}</span>`;
 }
-const diffCls = p => p == null ? 'diff-neu' : p < -0.001 ? 'diff-neg' : p > 0.001 ? 'diff-pos' : 'diff-neu';
+const diffCls=p=>p==null?'diff-neu':p<-0.001?'diff-neg':p>0.001?'diff-pos':'diff-neu';
 
-// ── Tabs ──────────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['tabla','graficas'][i] === tab));
-  document.getElementById('panel-tabla').classList.toggle('active', tab === 'tabla');
-  document.getElementById('panel-graficas').classList.toggle('active', tab === 'graficas');
-  if (tab === 'graficas') setTimeout(renderCharts, 60);
+function switchTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['tabla','graficas'][i]===tab));
+  document.getElementById('panel-tabla').classList.toggle('active',tab==='tabla');
+  document.getElementById('panel-graficas').classList.toggle('active',tab==='graficas');
+  if(tab==='graficas') setTimeout(renderCharts,60);
 }
 
-// ── Render table ──────────────────────────────────────────────────────────
-function render() {
-  const sf = document.getElementById('filter-sector').value;
-  const sg = document.getElementById('filter-signal').value;
-  let rows = data.map(d => ({
-    ...d,
-    signal:  sig(d),
-    diffPct: d.precio ? (d.precio - d.nav) / d.nav : null,
-    yieldV:  d.precio ? d.dist / d.precio : null,
-  }));
-  if (sf) rows = rows.filter(r => r.sector === sf);
-  if (sg) rows = rows.filter(r => r.signal === sg);
-  if (sortKey) rows.sort((a, b) => {
-    let av = a[sortKey], bv = b[sortKey];
-    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
-    if (av == null) return 1; if (bv == null) return -1;
-    return sortDir * (av - bv);
+function render(){
+  const sf=document.getElementById('filter-sector').value;
+  const sg=document.getElementById('filter-signal').value;
+  let rows=data.map(d=>({...d,signal:sig(d),diffPct:d.precio?(d.precio-d.nav)/d.nav:null,yieldV:d.precio?d.dist/d.precio:null}));
+  if(sf) rows=rows.filter(r=>r.sector===sf);
+  if(sg) rows=rows.filter(r=>r.signal===sg);
+  if(sortKey) rows.sort((a,b)=>{
+    let av=a[sortKey],bv=b[sortKey];
+    if(typeof av==='string') return sortDir*av.localeCompare(bv);
+    if(av==null) return 1; if(bv==null) return -1;
+    return sortDir*(av-bv);
   });
-
-  const tbody = document.getElementById('tbody');
-  if (!rows.length) {
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="11">Sin resultados para este filtro.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows.map(d => {
-    const dp = d.diffPct;
-    const precioCell = d.loading
-      ? `<span class="spin" style="font-size:11px;">↻</span>`
-      : d.precio
-        ? fmt(d.precio)
-        : `<span style="color:var(--text2)">N/D</span>`;
-    const dpStr = dp != null
-      ? `<span class="${diffCls(dp)}">${(dp*100).toFixed(1)}%</span>`
-      : '—';
+  const tbody=document.getElementById('tbody');
+  if(!rows.length){tbody.innerHTML='<tr class="loading-row"><td colspan="13">Sin resultados.</td></tr>';return;}
+  tbody.innerHTML=rows.map(d=>{
+    const dp=d.diffPct;
+    const yh=`https://finance.yahoo.com/quote/${d.ticker}.MX`;
+    const precioCell=d.loading?`<span class="spin" style="font-size:11px;">↻</span>`:d.precio?fmt(d.precio):`<span style="color:var(--text2)">N/D</span>`;
+    const dpStr=dp!=null?`<span class="${diffCls(dp)}">${(dp*100).toFixed(1)}%</span>`:'—';
+    const actStr=d.activos?'$'+(d.activos/1000).toFixed(0)+'B':'—';
+    const cbfStr=d.cbfis?d.cbfis.toLocaleString('es-MX')+'M':'—';
     return `<tr>
-      <td class="ticker">${d.ticker}</td>
-      <td>${precioCell}</td>
-      <td>${fmt(d.nav)}</td>
-      <td>${dpStr}</td>
-      <td>${fmt(d.dist, 4)}</td>
-      <td>${d.yieldV != null ? fmtPct(d.yieldV) : '—'}</td>
-      <td>${fmt(d.ffo, 4)}</td>
-      <td>${fmt(d.affo, 4)}</td>
-      <td>${fmtPct(d.ltv)}</td>
-      <td class="sector">${d.sector}</td>
-      <td>${badgeHtml(d.signal)}</td>
+      <td class="ticker-cell">
+        <a class="ticker-link" href="${yh}" target="_blank" title="Ver en Yahoo Finance">${d.ticker}<span class="ext">↗</span></a>
+        <button class="detail-btn" onclick="openModal('${d.ticker}')">+</button>
+      </td>
+      <td>${precioCell}</td><td>${fmt(d.nav)}</td><td>${dpStr}</td>
+      <td>${fmt(d.dist,4)}</td><td>${d.yieldV!=null?fmtPct(d.yieldV):'—'}</td>
+      <td>${fmt(d.ffo,4)}</td><td>${fmt(d.affo,4)}</td><td>${fmtPct(d.ltv)}</td>
+      <td>${actStr}</td><td>${cbfStr}</td>
+      <td class="sector">${d.sector}</td><td>${badgeHtml(d.signal)}</td>
     </tr>`;
   }).join('');
-
-  // Update metrics
-  const loaded = data.filter(d => !d.loading && d.precio != null);
-  if (loaded.length) {
-    const avgY = loaded.reduce((s, d) => s + d.dist / d.precio, 0) / loaded.length;
-    document.getElementById('m-count').textContent    = data.length;
-    document.getElementById('m-yield').textContent    = (avgY * 100).toFixed(1) + '%';
-    document.getElementById('m-discount').textContent = loaded.filter(d => d.precio < d.nav).length;
-    document.getElementById('m-buy').textContent      = loaded.filter(d => sig(d) === 'COMPRA').length;
+  const loaded=data.filter(d=>!d.loading&&d.precio!=null);
+  if(loaded.length){
+    const avgY=loaded.reduce((s,d)=>s+d.dist/d.precio,0)/loaded.length;
+    const avgLtv=loaded.reduce((s,d)=>s+d.ltv,0)/loaded.length;
+    document.getElementById('m-count').textContent=data.length;
+    document.getElementById('m-yield').textContent=(avgY*100).toFixed(1)+'%';
+    document.getElementById('m-discount').textContent=loaded.filter(d=>d.precio<d.nav).length;
+    document.getElementById('m-buy').textContent=loaded.filter(d=>sig(d)==='COMPRA').length;
+    document.getElementById('m-ltv').textContent=(avgLtv*100).toFixed(1)+'%';
   }
-
-  if (activeTab === 'graficas') renderCharts();
+  if(activeTab==='graficas') renderCharts();
 }
 
-// ── Render charts ─────────────────────────────────────────────────────────
-function renderCharts() {
-  const loaded = data.filter(d => d.precio != null);
-  if (!loaded.length) return;
-  const labels    = loaded.map(d => d.ticker);
-  const yieldData = loaded.map(d => parseFloat((d.dist / d.precio * 100).toFixed(2)));
-  const navData   = loaded.map(d => parseFloat(((d.precio - d.nav) / d.nav * 100).toFixed(2)));
-  const ltvData   = loaded.map(d => parseFloat((d.ltv * 100).toFixed(1)));
+function openModal(ticker){
+  const d=data.find(f=>f.ticker===ticker);
+  if(!d) return;
+  const dp=d.precio?(d.precio-d.nav)/d.nav:null;
+  const yld=d.precio?d.dist/d.precio:null;
+  const mktcap=d.precio&&d.cbfis?Math.round(d.precio*d.cbfis):null;
+  document.getElementById('modal-title').textContent=d.ticker;
+  document.getElementById('modal-sub').textContent=d.sector;
+  document.getElementById('modal-badge').innerHTML=badgeHtml(sig(d));
+  document.getElementById('modal-price').textContent=d.precio?'$'+d.precio.toFixed(2):'Sin precio';
+  document.getElementById('md-nav').textContent=fmt(d.nav);
+  document.getElementById('md-diff').innerHTML=dp!=null?`<span class="${diffCls(dp)}">${(dp*100).toFixed(1)}%</span>`:'—';
+  document.getElementById('md-dist').textContent=fmt(d.dist,4);
+  document.getElementById('md-yield').textContent=yld!=null?fmtPct(yld):'—';
+  document.getElementById('md-ffo').textContent=fmt(d.ffo,4);
+  document.getElementById('md-affo').textContent=fmt(d.affo,4);
+  document.getElementById('md-ltv').textContent=fmtPct(d.ltv);
+  document.getElementById('md-activos').textContent=d.activos?'$'+d.activos.toLocaleString('es-MX')+' MDP':'—';
+  document.getElementById('md-cbfis').textContent=d.cbfis?d.cbfis.toLocaleString('es-MX')+' M':'—';
+  document.getElementById('md-mktcap').textContent=mktcap?'$'+mktcap.toLocaleString('es-MX')+' MDP':'—';
+  const yh=`https://finance.yahoo.com/quote/${d.ticker}.MX`;
+  document.getElementById('ml-yahoo').href=yh;
+  document.getElementById('ml-yahoo-fin').href=yh+'/financials/';
+  document.getElementById('modal-bg').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(e){if(e.target===document.getElementById('modal-bg')) closeModalDirect();}
+function closeModalDirect(){document.getElementById('modal-bg').classList.remove('open');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeModalDirect();});
 
-  const yColors = yieldData.map(v => v > 7 ? '#3B6D11' : v > 6 ? '#854F0B' : '#AAAAAA');
-  const nColors = navData.map(v => v < -5 ? '#3B6D11' : v > 5 ? '#A32D2D' : '#AAAAAA');
-  const lColors = ltvData.map(v => v > 50 ? '#A32D2D' : v > 40 ? '#854F0B' : '#3B6D11');
-
-  const baseOpts = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(1)}%` } } },
-    scales: {
-      x: { ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: false }, grid: { display: false } },
-      y: { ticks: { font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.05)' } }
-    }
-  };
-
-  ['chartYield','chartNav','chartLtv'].forEach(id => { if (charts[id]) { charts[id].destroy(); delete charts[id]; } });
-
-  charts['chartYield'] = new Chart(document.getElementById('chartYield'), {
-    type: 'bar',
-    data: { labels, datasets: [{ data: yieldData, backgroundColor: yColors, borderRadius: 4, borderSkipped: false }] },
-    options: baseOpts,
-  });
-  document.getElementById('legend-yield').innerHTML = [
-    ['#3B6D11','Yield > 7% — Señal de compra'],
-    ['#854F0B','Yield 6–7% — Atractivo'],
-    ['#AAAAAA','Yield < 6% — Neutral'],
-  ].map(([c,l]) => `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${l}</div>`).join('');
-
-  charts['chartNav'] = new Chart(document.getElementById('chartNav'), {
-    type: 'bar',
-    data: { labels, datasets: [{ data: navData, backgroundColor: nColors, borderRadius: 4, borderSkipped: false }] },
-    options: baseOpts,
-  });
-
-  charts['chartLtv'] = new Chart(document.getElementById('chartLtv'), {
-    type: 'bar',
-    data: { labels, datasets: [{ data: ltvData, backgroundColor: lColors, borderRadius: 4, borderSkipped: false }] },
-    options: baseOpts,
-  });
+function renderCharts(){
+  const loaded=data.filter(d=>d.precio!=null);
+  if(!loaded.length) return;
+  const labels=loaded.map(d=>d.ticker);
+  const yD=loaded.map(d=>parseFloat((d.dist/d.precio*100).toFixed(2)));
+  const nD=loaded.map(d=>parseFloat(((d.precio-d.nav)/d.nav*100).toFixed(2)));
+  const lD=loaded.map(d=>parseFloat((d.ltv*100).toFixed(1)));
+  const yC=yD.map(v=>v>7?'#3B6D11':v>6?'#854F0B':'#AAAAAA');
+  const nC=nD.map(v=>v<-5?'#3B6D11':v>5?'#A32D2D':'#AAAAAA');
+  const lC=lD.map(v=>v>50?'#A32D2D':v>40?'#854F0B':'#3B6D11');
+  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y.toFixed(1)}%`}}},scales:{x:{ticks:{font:{size:10},maxRotation:45,autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,0.05)'}}}};
+  ['chartYield','chartNav','chartLtv'].forEach(id=>{if(charts[id]){charts[id].destroy();delete charts[id];}});
+  charts['chartYield']=new Chart(document.getElementById('chartYield'),{type:'bar',data:{labels,datasets:[{data:yD,backgroundColor:yC,borderRadius:4,borderSkipped:false}]},options:base});
+  document.getElementById('legend-yield').innerHTML=[['#3B6D11','Yield > 7% — Señal de compra'],['#854F0B','Yield 6–7% — Atractivo'],['#AAAAAA','Yield < 6% — Neutral']].map(([c,l])=>`<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${l}</div>`).join('');
+  charts['chartNav']=new Chart(document.getElementById('chartNav'),{type:'bar',data:{labels,datasets:[{data:nD,backgroundColor:nC,borderRadius:4,borderSkipped:false}]},options:base});
+  charts['chartLtv']=new Chart(document.getElementById('chartLtv'),{type:'bar',data:{labels,datasets:[{data:lD,backgroundColor:lC,borderRadius:4,borderSkipped:false}]},options:base});
 }
 
-function toggleSort(key) {
-  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+function toggleSort(key){if(sortKey===key) sortDir*=-1; else{sortKey=key;sortDir=1;} render();}
+
+async function fetchPrice(ticker){
+  const sym=ticker+'.MX';
+  const u1=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
+  const u2=`https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
+  const proxies=[
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(u1)}`,
+    `https://corsproxy.io/?${encodeURIComponent(u2)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u1)}`,
+  ];
+  for(const proxy of proxies){
+    try{
+      const res=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
+      if(!res.ok) continue;
+      const json=await res.json();
+      const meta=json?.chart?.result?.[0]?.meta;
+      const price=meta?.regularMarketPrice||meta?.previousClose;
+      if(price&&price>0) return price;
+    }catch{continue;}
+  }
+  return null;
+}
+
+async function loadAll(){
+  const btn=document.getElementById('refresh-btn'),icon=document.getElementById('refresh-icon');
+  const prog=document.getElementById('progress-wrap'),bar=document.getElementById('progress-bar');
+  const err=document.getElementById('error-banner');
+  btn.disabled=true;icon.className='spin';icon.textContent='↻';
+  prog.style.display='block';bar.style.width='0%';err.style.display='none';
+  document.getElementById('status-line').textContent='Obteniendo precios de Yahoo Finance...';
+  data=FIBRAS.map(f=>({...f,precio:null,loading:true}));
   render();
-}
-
-// ── Fetch price from Yahoo Finance ────────────────────────────────────────
-async function fetchPrice(ticker) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}.MX?interval=1d&range=1d`;
-  try {
-    const res  = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-    if (!res.ok) throw new Error();
-    const json = await res.json();
-    const meta = json?.chart?.result?.[0]?.meta;
-    return meta?.regularMarketPrice || meta?.previousClose || null;
-  } catch { return null; }
-}
-
-// ── Load all prices ───────────────────────────────────────────────────────
-async function loadAll() {
-  const btn  = document.getElementById('refresh-btn');
-  const icon = document.getElementById('refresh-icon');
-  const prog = document.getElementById('progress-wrap');
-  const bar  = document.getElementById('progress-bar');
-  const err  = document.getElementById('error-banner');
-
-  btn.disabled = true; icon.className = 'spin'; icon.textContent = '↻';
-  prog.style.display = 'block'; bar.style.width = '0%'; err.style.display = 'none';
-  document.getElementById('status-line').textContent = 'Obteniendo precios de Yahoo Finance...';
-
-  data = FIBRAS.map(f => ({ ...f, precio: null, loading: true }));
-  render();
-
-  let done = 0;
-  for (let i = 0; i < data.length; i += 3) {
-    await Promise.all(data.slice(i, i + 3).map(async (d, bi) => {
-      data[i + bi].precio  = await fetchPrice(d.ticker);
-      data[i + bi].loading = false;
-      bar.style.width = Math.round((++done / data.length) * 100) + '%';
+  let done=0;
+  for(let i=0;i<data.length;i+=2){
+    await Promise.all(data.slice(i,i+2).map(async(d,bi)=>{
+      data[i+bi].precio=await fetchPrice(d.ticker);
+      data[i+bi].loading=false;
+      bar.style.width=Math.round((++done/data.length)*100)+'%';
       render();
     }));
-    if (i + 3 < data.length) await new Promise(r => setTimeout(r, 350));
+    if(i+2<data.length) await new Promise(r=>setTimeout(r,500));
   }
-
-  prog.style.display = 'none'; btn.disabled = false;
-  icon.className = ''; icon.textContent = '↻';
-
-  const loaded = data.filter(d => d.precio != null).length;
-  const failed = data.length - loaded;
-  document.getElementById('status-line').textContent =
-    `${loaded} de ${data.length} precios cargados · Yahoo Finance`;
-  if (failed) {
-    err.style.display = 'block';
-    err.textContent   = `${failed} FIBRA(s) sin precio en tiempo real. Verifica conexión o consulta directamente en GBM+.`;
-  }
-  const now = new Date();
-  document.getElementById('last-update').textContent =
-    `Actualizado: ${now.toLocaleTimeString('es-MX')} · ${now.toLocaleDateString('es-MX')}`;
+  prog.style.display='none';btn.disabled=false;icon.className='';icon.textContent='↻';
+  const loaded=data.filter(d=>d.precio!=null).length,failed=data.length-loaded;
+  document.getElementById('status-line').textContent=`${loaded} de ${data.length} precios cargados · Yahoo Finance`;
+  if(failed){err.style.display='block';err.textContent=`${failed} FIBRA(s) sin precio. Intenta actualizar de nuevo.`;}
+  const now=new Date();
+  document.getElementById('last-update').textContent=`Actualizado: ${now.toLocaleTimeString('es-MX')} · ${now.toLocaleDateString('es-MX')}`;
 }
-
 loadAll();
 </script>
 </body>
