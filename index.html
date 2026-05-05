@@ -205,23 +205,23 @@
 
 <script>
 // ── Datos fundamentales (actualización automática trimestral) ──────────────
+// Datos fundamentales — NAV x CBFI tomado del reporte de cierre 30 abril 2026
 const FIBRAS=[
-  {ticker:"FUNO11",    nav:18.50,dist:1.25,ffo:1.80,affo:1.60,ltv:0.42,activos:120000,cbfis:5800, sector:"Diversificado"},
-  {ticker:"DANHOS13",  nav:28.00,dist:1.80,ffo:2.20,affo:2.00,ltv:0.35,activos:55000, cbfis:1800, sector:"Comercial / Oficinas"},
-  {ticker:"FSHOP13",   nav:14.00,dist:0.90,ffo:1.10,affo:1.00,ltv:0.38,activos:28000, cbfis:1600, sector:"Centros Comerciales"},
-  {ticker:"FMTY14",    nav:16.00,dist:1.20,ffo:1.40,affo:1.30,ltv:0.30,activos:32000, cbfis:1900, sector:"Industrial / Oficinas"},
-  {ticker:"FIBRAPL14", nav:52.00,dist:3.50,ffo:4.20,affo:4.00,ltv:0.28,activos:85000, cbfis:1400, sector:"Industrial / Logística"},
-  {ticker:"FIBRAMQ12", nav:24.00,dist:1.60,ffo:2.00,affo:1.80,ltv:0.45,activos:45000, cbfis:1650, sector:"Industrial / Logística"},
-  {ticker:"TERRA13",   nav:30.00,dist:2.00,ffo:2.40,affo:2.20,ltv:0.33,activos:38000, cbfis:1100, sector:"Industrial"},
-  {ticker:"FINN13",    nav:11.50,dist:0.80,ffo:0.95,affo:0.85,ltv:0.50,activos:18000, cbfis:1400, sector:"Diversificado"},
-  {ticker:"STORAGE18", nav:20.00,dist:1.30,ffo:1.60,affo:1.45,ltv:0.40,activos:12000, cbfis:550,  sector:"Autoalmacenaje"},
-  {ticker:"FIBRAHD15", nav:22.00,dist:1.50,ffo:1.75,affo:1.60,ltv:0.37,activos:22000, cbfis:900,  sector:"Hotel / Hospitalidad"},
-  {ticker:"FPLUS16",   nav:18.00,dist:1.10,ffo:1.40,affo:1.25,ltv:0.44,activos:15000, cbfis:750,  sector:"Diversificado"},
-  {ticker:"FNOVA17",   nav:35.00,dist:2.20,ffo:2.60,affo:2.40,ltv:0.36,activos:30000, cbfis:820,  sector:"Industrial / Logística"},
-  {ticker:"VESTA",     nav:38.00,dist:2.80,ffo:3.20,affo:3.00,ltv:0.25,activos:48000, cbfis:1100, sector:"Industrial"},
-  {ticker:"CREAL",     nav:16.00,dist:1.00,ffo:1.20,affo:1.10,ltv:0.55,activos:25000, cbfis:1300, sector:"Hipotecario"},
-  {ticker:"FCFE18",    nav:24.00,dist:1.60,ffo:1.90,affo:1.75,ltv:0.32,activos:35000, cbfis:1500, sector:"Energía / Infraestructura"},
-  {ticker:"FMX23",     nav:28.00,dist:1.80,ffo:2.10,affo:1.95,ltv:0.30,activos:18000, cbfis:580,  sector:"Energía / Infraestructura"},
+  {ticker:"FIBRAPL14", nav:77.63, dist:2.85, ffo:3.20, affo:3.00, ltv:0.28, activos:290000, cbfis:3200, sector:"Industrial / Logística"},
+  {ticker:"FMTY14",    nav:12.59, dist:0.95, ffo:1.10, affo:1.00, ltv:0.30, activos:32000,  cbfis:1900, sector:"Industrial / Oficinas"},
+  {ticker:"FUNO11",    nav:53.12, dist:2.40, ffo:2.80, affo:2.60, ltv:0.42, activos:230000, cbfis:5800, sector:"Diversificado"},
+  {ticker:"FIBRAMQ12", nav:52.68, dist:2.45, ffo:2.80, affo:2.60, ltv:0.45, activos:45000,  cbfis:1650, sector:"Industrial / Logística"},
+  {ticker:"DANHOS13",  nav:41.43, dist:1.80, ffo:2.20, affo:2.00, ltv:0.35, activos:55000,  cbfis:1800, sector:"Comercial / Oficinas"},
+  {ticker:"FIHO12",    nav:15.45, dist:0.60, ffo:0.75, affo:0.68, ltv:0.48, activos:18000,  cbfis:2200, sector:"Hotel / Hospitalidad"},
+  {ticker:"FCFE18",    nav:29.69, dist:2.70, ffo:3.00, affo:2.85, ltv:0.32, activos:35000,  cbfis:1500, sector:"Energía / Infraestructura"},
+  {ticker:"FNOVA17",   nav:28.53, dist:2.49, ffo:2.80, affo:2.60, ltv:0.36, activos:30000,  cbfis:820,  sector:"Industrial / Logística"},
+  {ticker:"FINN13",    nav:10.30, dist:0.36, ffo:0.45, affo:0.40, ltv:0.50, activos:18000,  cbfis:1400, sector:"Diversificado"},
+  {ticker:"FSHOP13",   nav:30.09, dist:0.78, ffo:0.95, affo:0.88, ltv:0.38, activos:28000,  cbfis:1600, sector:"Centros Comerciales"},
+  {ticker:"FHIPO14",   nav:24.49, dist:1.20, ffo:1.40, affo:1.30, ltv:0.55, activos:22000,  cbfis:1100, sector:"Hipotecario"},
+  {ticker:"FMX23",     nav:27.52, dist:1.51, ffo:1.80, affo:1.65, ltv:0.30, activos:18000,  cbfis:580,  sector:"Energía / Infraestructura"},
+  {ticker:"STORAGE18", nav:20.00, dist:1.30, ffo:1.60, affo:1.45, ltv:0.40, activos:12000,  cbfis:550,  sector:"Autoalmacenaje"},
+  {ticker:"FIBRAHD15", nav:22.00, dist:1.50, ffo:1.75, affo:1.60, ltv:0.37, activos:22000,  cbfis:900,  sector:"Hotel / Hospitalidad"},
+  {ticker:"FPLUS16",   nav:18.00, dist:1.10, ffo:1.40, affo:1.25, ltv:0.44, activos:15000,  cbfis:750,  sector:"Diversificado"},
 ];
 
 let data=FIBRAS.map(f=>({...f,precio:null,loading:true}));
